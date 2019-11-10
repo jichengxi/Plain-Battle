@@ -1,67 +1,96 @@
 import pygame
 from sprites import *
 
-# 初始化pygame
-pygame.init()
 
-# 创建游戏主窗口480*700
-screen = pygame.display.set_mode((480, 700))
+class PlaneGame(object):
+    """"飞机大战祝游戏"""
 
-# 绘制背景图像
-# 1. 加载图像
-bg = pygame.image.load("./images/background.png")
-hero = pygame.image.load("./images/me1.png")
-# 2. blit绘制图像
-screen.blit(bg, (0, 0))
-screen.blit(hero, (150, 500))
-# 3. update更新屏幕显示
-pygame.display.update()
+    def __init__(self):
+        print("游戏初始化...")
+        # 1. 创建游戏的窗口
+        self.screen = pygame.display.set_mode(SECEEN_RECT.size)
+        # 2. 创建游戏的时钟
+        self.clock = pygame.time.Clock()
+        # 3. 调用私有方法，精灵和精灵组的创建
+        self.__create_prites()
+        # 4， 设置定时器事件 - 创建敌机 1s
+        pygame.time.set_timer(CREATE_ENEMY_EVENT, 1000)
 
-# 1) 定义rect记录飞机的初始位置
-hero_rect = pygame.Rect(150, 500, 102, 126)
-# 创建时钟对象
-clock = pygame.time.Clock()
+    def __create_prites(self):
+        # 创建背景精灵和精灵组
+        bg1 = BackGround()
+        bg2 = BackGround(True)
 
-# 创建敌机的精灵
-enemy = GameSprite("./images/enemy1.png")
+        self.back_group = pygame.sprite.Group(bg1, bg2)
 
-# 创建敌机的精灵组
-enemy_group = pygame.sprite.Group(enemy)
+        # 创建敌机的精灵组
+        self.enemy_group = pygame.sprite.Group()
 
-# 游戏循环 -> 游戏正式开始
-while True:
-    # 指定循环体内部代码执行的频率
-    clock.tick(60)
+        # 创建英雄的精灵和精灵组
+        self.hero = Hero()
+        self.hero_group = pygame.sprite.Group(self.hero)
 
-    # 监听事件
-    for event in pygame.event.get():
-        # 判断事件类型是不是退出事件
-        if event.type == pygame.QUIT:
-            print("游戏退出...")
-            # quit 卸载所有模块
-            pygame.quit()
-            # exit()
-            exit()
+    def start_game(self):
+        print("游戏开始...")
 
-    # 2) 修改飞机的位置
-    hero_rect.y -= 1
-    # 判断飞机的位置
-    if hero_rect.y + 126 <= 0:
-        hero_rect.y = 700
+        while True:
+            # 1. 设置刷新帧率
+            self.clock.tick(FRAME_PER_SEC)
+            # 2. 事件监听
+            self.__event_listen()
+            # 3. 碰撞检测
+            self.__check_collide()
+            # 4. 更新/绘制精灵组
+            self.__update_sprites()
+            # 5. 更新显示
+            pygame.display.update()
 
-    # 3) 调用blit方法绘制图像
-    screen.blit(bg, (0, 0))
-    screen.blit(hero, hero_rect)
+    def __event_listen(self):
+        for event in pygame.event.get():
+            # 判断是否退出游戏
+            if event.type == pygame.QUIT:
+                PlaneGame.__game_over()
+            elif event.type == CREATE_ENEMY_EVENT:
+                print("敌机出场")
+                # 创建敌机精灵
+                enemy = Enemy()
+                # 将敌机精灵添加到敌机精灵组
+                self.enemy_group.add(enemy)
+        # 使用键盘提供的方法或许键盘按键 - 按键元组
+        keys_pressed = pygame.key.get_pressed()
+        # 判断元组中对应的按键索引值 1
+        if keys_pressed[pygame.K_RIGHT]:
+            self.hero.speed = 2
+        elif keys_pressed[pygame.K_LEFT]:
+            self.hero.speed = -2
+        else:
+            self.hero.speed = 0
 
-    # 让精灵组调用两个方法
-    # update
-    enemy_group.update()
-    # draw
-    enemy_group.draw(screen)
 
-    # 4) 更新屏幕显示
-    pygame.display.update()
-    pass
+    def __check_collide(self):
+        pass
 
-# 退出pygame
-pygame.quit()
+    def __update_sprites(self):
+        self.back_group.update()
+        self.back_group.draw(self.screen)
+
+        self.enemy_group.update()
+        self.enemy_group.draw(self.screen)
+
+        self.hero_group.update()
+        self.hero_group.draw(self.screen)
+
+    @staticmethod
+    def __game_over():
+        print("游戏结束")
+
+        pygame.quit()
+        exit()
+
+
+if __name__ == '__main__':
+    # 创建游戏对象
+    game = PlaneGame()
+
+    # 启动游戏
+    game.start_game()
