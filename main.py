@@ -15,6 +15,7 @@ class PlaneGame(object):
         self.__create_prites()
         # 4， 设置定时器事件 - 创建敌机 1s
         pygame.time.set_timer(CREATE_ENEMY_EVENT, 1000)
+        pygame.time.set_timer(CREATE_FIRE_EVENT, 500)
 
     def __create_prites(self):
         # 创建背景精灵和精灵组
@@ -56,6 +57,9 @@ class PlaneGame(object):
                 enemy = Enemy()
                 # 将敌机精灵添加到敌机精灵组
                 self.enemy_group.add(enemy)
+            elif event.type == CREATE_FIRE_EVENT:
+                self.hero.fire()
+
         # 使用键盘提供的方法或许键盘按键 - 按键元组
         keys_pressed = pygame.key.get_pressed()
         # 判断元组中对应的按键索引值 1
@@ -66,9 +70,19 @@ class PlaneGame(object):
         else:
             self.hero.speed = 0
 
-
     def __check_collide(self):
-        pass
+        # 1. 子弹摧毁敌机
+        pygame.sprite.groupcollide(
+            self.hero.bullets, self.enemy_group, True, True)
+        # 2. 敌机撞毁英雄
+        enemies = pygame.sprite.spritecollide(
+            self.hero, self.enemy_group, True)
+        # 判断列表是否有内容
+        if len(enemies) > 0:
+            # 让英雄牺牲
+            self.hero.kill()
+            # 游戏结束
+            PlaneGame.__game_over()
 
     def __update_sprites(self):
         self.back_group.update()
@@ -79,6 +93,9 @@ class PlaneGame(object):
 
         self.hero_group.update()
         self.hero_group.draw(self.screen)
+
+        self.hero.bullets.update()
+        self.hero.bullets.draw(self.screen)
 
     @staticmethod
     def __game_over():
